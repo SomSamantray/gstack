@@ -239,10 +239,12 @@ function semverKey(v: string): number[] | null {
   return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
 }
 
+function safeReaddir(dir: string): string[] {
+  try { return fs.readdirSync(dir); } catch { return []; }
+}
+
 function newestSemverDir(dir: string): string | null {
-  let entries: string[];
-  try { entries = fs.readdirSync(dir); } catch { return null; }
-  const versions = entries.map(e => ({ e, k: semverKey(e) })).filter(x => x.k) as { e: string; k: number[] }[];
+  const versions = safeReaddir(dir).map(e => ({ e, k: semverKey(e) })).filter(x => x.k) as { e: string; k: number[] }[];
   versions.sort((a, b) => (b.k[0] - a.k[0]) || (b.k[1] - a.k[1]) || (b.k[2] - a.k[2]));
   return versions[0]?.e ?? null;
 }
@@ -283,10 +285,6 @@ function engineSiblings(launcherDir: string): string[] {
   ]);
   const name = WIN ? 'impeccable.exe' : 'impeccable';
   return [...tags].map(t => path.join(launcherDir, 'bin', t, name));
-}
-
-function safeReaddir(dir: string): string[] {
-  try { return fs.readdirSync(dir); } catch { return []; }
 }
 
 /**
