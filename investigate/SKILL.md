@@ -563,23 +563,13 @@ Check once per run that Aside is ready (if this skill already ran this same prob
 ```bash
 _T=""; command -v gtimeout >/dev/null 2>&1 && _T="gtimeout 30"; [ -z "$_T" ] && command -v timeout >/dev/null 2>&1 && _T="timeout 30"
 [ -z "$_T" ] && command -v perl >/dev/null 2>&1 && _T="perl -e alarm(shift);exec(@ARGV) 30"
-if [ "${GSTACK_SKIP_ASIDE:-}" = "1" ]; then
+A=$(command -v aside || command -v "$HOME/.local/bin/aside")
+if [ "${GSTACK_SKIP_ASIDE:-}" = "1" ] || [ -z "$A" ]; then
   echo "NEEDS_ASIDE"
+elif $_T "$A" repl 'console.log("ASIDE_READY " + pwd)' 2>&1 | grep -q '^ASIDE_READY'; then
+  echo "READY: aside $($A --version 2>/dev/null)"
 else
-  ASIDE_BIN=""
-  command -v aside >/dev/null 2>&1 && ASIDE_BIN="aside"
-  [ -z "$ASIDE_BIN" ] && [ -x "$HOME/.local/bin/aside" ] && ASIDE_BIN="$HOME/.local/bin/aside"
-  if [ -z "$ASIDE_BIN" ]; then
-    echo "NEEDS_ASIDE"
-  elif $_T "$ASIDE_BIN" repl 'console.log("ASIDE_READY " + pwd)' 2>&1 | grep -q '^ASIDE_READY'; then
-    if [ "$ASIDE_BIN" = "aside" ]; then
-      echo "READY: aside $(aside --version 2>/dev/null)"
-    else
-      echo "READY: aside $($ASIDE_BIN --version 2>/dev/null) (found at $ASIDE_BIN, not on PATH — add it to your shell profile)"
-    fi
-  else
-    echo "ASIDE_NOT_RUNNING"
-  fi
+  echo "ASIDE_NOT_RUNNING"
 fi
 ```
 
